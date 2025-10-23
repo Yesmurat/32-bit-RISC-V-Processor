@@ -17,10 +17,6 @@ module datapath (
     input logic [2:0] funct3D,
     input logic jumpRegD,
                 
-
-
-
-                
     // inputs from Hazard Unit
     input logic StallF, StallD,
     input logic FlushD, FlushE,
