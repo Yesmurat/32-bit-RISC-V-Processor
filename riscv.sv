@@ -53,20 +53,24 @@ module riscv (input logic clk, reset,
         .funct3(funct3),
         .funct7(funct7),
         
-        .RegWriteD(RegWriteD),
         .ResultSrcD(ResultSrcD),
+        .RegWriteD(RegWriteD),
         .MemWriteD(MemWriteD),
         .JumpD(JumpD),
         .BranchD(BranchD),
-        .ALUControlD(ALUControlD),
         .ALUSrcD(ALUSrcD),
         .ImmSrcD(ImmSrcD),
         .SrcAsrcD(SrcAsrcD),
         .funct3D(funct3D),
-        .jumpRegD(jumpRegD)
+        .jumpRegD(jumpRegD),
+
+        .ALUControlD(ALUControlD)
     );
 
-    datapath datapath (.clk(clk), .reset(reset),
+    datapath datapath (
+        
+                .clk(clk),
+                .reset(reset),
 
                 // Control signals
                 .RegWriteD(RegWriteD),
@@ -98,9 +102,11 @@ module riscv (input logic clk, reset,
                 .ALUResultM(ALUResultM),
                 .WriteDataM(WriteDataM),
 				.MemWriteM(MemWriteM),
+
                 .opcode(opcode),
                 .funct3(funct3),
                 .funct7(funct7),
+
                 .byteEnable(byteEnable),
 
                 // outputs to Hazard unit
@@ -108,11 +114,11 @@ module riscv (input logic clk, reset,
                 .Rs2D(Rs2D),
                 .Rs1E(Rs1E),
                 .Rs2E(Rs2E),
+                .RdE(RdE),
                 .PCSrcE(PCSrcE),
                 .ResultSrcE_zero(ResultSrcE_zero),
                 .RegWriteM(RegWriteM),
                 .RegWriteW(RegWriteW),
-                .RdE(RdE),
                 .RdM(RdM),
                 .RdW(RdW),
                 .MulBusy(MulBusy)

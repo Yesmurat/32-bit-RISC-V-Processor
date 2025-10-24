@@ -6,18 +6,18 @@ module top_tb;
 
     logic clk;
     logic reset;
-    logic [31:0] pc_out;
-    logic [31:0] rd_instr;
-    logic memwritem;
-    logic [31:0] writedatam;
+    logic [3:0] pc_out;
+    // logic [31:0] rd_instr;
+    // logic memwritem;
+    // logic [31:0] writedatam;
 
     top dut(
         .clk(clk),
         .reset(reset),
         .pc_out(pc_out),
-        .rd_instr(rd_instr),
-        .memwritem(memwritem),
-        .writedatam(writedatam)
+        // .rd_instr(rd_instr),
+        // .memwritem(memwritem),
+        // .writedatam(writedatam)
     );
 
     initial clk = 0;

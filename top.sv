@@ -8,10 +8,10 @@ module top (
 
     input logic clk,
     input logic reset,
-    output logic [31:0] pc_out,
-    output logic [31:0] rd_instr,
-    output logic memwritem,
-    output logic [31:0] writedatam
+    output logic [3:0] pc_out
+    // output logic [31:0] rd_instr,
+    // output logic memwritem,
+    // output logic [31:0] writedatam
 
 );
 
@@ -20,10 +20,10 @@ module top (
     logic        MemWriteM;
     logic        StallF;
 
-    assign pc_out =     PCF;
-    assign rd_instr =   RD_instr;
-    assign memwritem =  MemWriteM;
-    assign writedatam = WriteDataM;
+    assign pc_out =     PCF[3:0];
+    // assign rd_instr =   RD_instr;
+    // assign memwritem =  MemWriteM;
+    // assign writedatam = WriteDataM;
 
     riscv core (
         .clk(clk),

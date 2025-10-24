@@ -2,7 +2,8 @@
 
 module datapath (
 
-    input logic clk, reset,
+    input logic clk,
+    input logic reset,
 
     // Control signals
     input logic RegWriteD,
@@ -23,7 +24,8 @@ module datapath (
     input logic [1:0] ForwardAE, ForwardBE,
 
     // inputs from memories
-    input logic [31:0] RD_instr, RD_data,
+    input logic [31:0] RD_instr,
+    input logic [31:0] RD_data,
 
     // outputs to instruction and data memories
     output logic [31:0] PCF, // input to Instruction Memory
