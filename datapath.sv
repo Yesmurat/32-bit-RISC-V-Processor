@@ -46,6 +46,8 @@ module datapath (
     output logic PCSrcE, ResultSrcE_zero, RegWriteM, RegWriteW,
     output logic [4:0] RdM, // output from MEM stage
     output logic [4:0] RdW, // output from WB stage
+    output logic SrcAsrcE,
+    output logic ALUSrcE,
     output logic MulBusy
 
 );
@@ -70,14 +72,6 @@ module datapath (
         .q(PCF)
     );
 
-    logic [31:0] PCF_req;
-    always_ff @( posedge clk ) begin
-        if (reset)
-            PCF_req <= 32'b0;
-        else if (~StallF)
-            PCF_req <= PCF; // remember the PC that generated the next instruction
-    end
-
     // Instruction Decode (ID) stage
     logic [31:0] PCD, PCPlus4D;
     logic [31:0] RD1, RD2;
@@ -94,18 +88,15 @@ module datapath (
     assign funct3 = InstrD[14:12];
     assign funct7 = InstrD[31:25];
 
-    logic IFID_we; // new write enable
-    assign IFID_we = ~StallD & ~DropIF;
     assign PCPlus4F = PCF + 32'd4;
 
     IFIDregister ifidreg(
         .clk(clk),
         .reset(FlushD | reset),
-        .en(IFID_we),
-        // use the previous PC that generated RD_instr
+        .en(~StallD),
         .RD_instr(RD_instr),
-        .PCF(PCF_req),
-        .PCPlus4F(PCF_req + 32'd4),
+        .PCF(PCF),
+        .PCPlus4F(PCPlus4F),
         .InstrD(InstrD),
         .PCD(PCD),
         .PCPlus4D(PCPlus4D)
@@ -124,7 +115,7 @@ module datapath (
     );
 
     extend ext(
-        .instr(InstrD),
+        .instr_31_7(InstrD[31:7]),
         .immsrc(ImmSrcD),
         .immext(ImmExtD)
     );
@@ -136,18 +127,17 @@ module datapath (
 
     logic [31:0] SrcAE, SrcBE;
     logic [31:0] WriteDataE;
-    logic [31:0] SrcAE_input1;
     logic [31:0] ALUResultE;
 
     logic RegWriteE;
     logic [2:0] ResultSrcE;
     logic MemWriteE, JumpE, BranchE;
     logic [3:0] ALUControlE;
-    logic ALUSrcE;
-    logic SrcAsrcE;
     logic [2:0] funct3E;
     logic branchTakenE;
     logic jumpRegE;
+
+    logic en_idex, en_exmem;
 
     IDEXregister idexreg(
         .clk(clk),
@@ -192,29 +182,27 @@ module datapath (
     assign PCSrcE = (BranchE & branchTakenE) | JumpE;
     assign ResultSrcE_zero = ResultSrcE[0];
 
-    mux3 SrcAE_input1mux(
-        .d0(RD1E), .d1(ResultW), .d2(ALUResultM), // inputs
-        .s(ForwardAE), // select signal
-        .y(SrcAE_input1) // output
-    );
-
-    mux2 SrcAEmux(
-        .d0(PCE), .d1(SrcAE_input1),
-        .s(SrcAsrcE), // new control signal that chooses either PC or RD1
+    // SrcA mux
+    mux4 inputA(
+        .d0(RD1E),
+        .d1(ResultW),
+        .d2(ALUResultM),
+        .d3(PCE),
+        .s(ForwardAE),
         .y(SrcAE)
     );
 
-    mux3 WriteDataEmux(
-        .d0(RD2E), .d1(ResultW), .d2(ALUResultM),
+    // SrcB mux
+    mux4 inputB(
+        .d0(RD2E),
+        .d1(ResultW),
+        .d2(ALUResultM),
+        .d3(ImmExtE),
         .s(ForwardBE),
-        .y(WriteDataE)
+        .y(SrcBE)
     );
 
-    mux2 SrcBEmux(
-        .d0(WriteDataE), .d1(ImmExtE), // inputs
-        .s(ALUSrcE), // select signal
-        .y(SrcBE) // output
-    );
+    assign WriteDataE = SrcBE;
 
     branch_unit bu(
         .SrcAE(SrcAE), .SrcBE(SrcBE),
@@ -223,14 +211,15 @@ module datapath (
     );
 
     logic [31:0] adder_base;
-    assign adder_base = jumpRegE ? SrcAE_input1 : PCE;
+    assign adder_base = jumpRegE ? SrcAE : PCE;
 
     assign PCTargetE = adder_base + ImmExtE;
 
     ALU alu(
-        .d0(SrcAE), .d1(SrcBE), //  inputs
-        .s(ALUControlE), // operation control signal
-        .y(ALUResultE) // output
+        .d0(SrcAE),
+        .d1(SrcBE),
+        .s(ALUControlE),
+        .y(ALUResultE)
     );
 
     logic [31:0] multiplier_resultE;
@@ -246,7 +235,6 @@ module datapath (
     assign MulBusy = mul_busy;
 
     // Hold EX & MEM stages while multiplier is busy
-    logic en_idex, en_exmem;
     assign en_idex = ~mul_busy;
     assign en_exmem = ~mul_busy;
 
@@ -260,20 +248,6 @@ module datapath (
        .result(multiplier_resultE),
        .busy(mul_busy)
    );
-
-    logic DropIF;
-
-    always_ff @(posedge clk) begin
-
-        if (reset)
-            DropIF <= 1'b0;
-
-        else if (PCSrcE) // branch/jump taken
-            DropIF <= 1'b1; // drop next instruction
-
-        else
-            DropIF <= 1'b0;
-    end
 
     // Memory write (MEM) stage
     logic [31:0] PCPlus4M;
@@ -325,7 +299,7 @@ module datapath (
 
         byteEnable = 4'b0000;
 
-        case (funct3M) // funct3 determines store type
+        unique case (funct3M) // funct3 determines store type
 
             3'b000: case (byteAddrM)
 
@@ -333,7 +307,6 @@ module datapath (
                 2'b01: byteEnable = 4'b0010; // enable byte 1
                 2'b10: byteEnable = 4'b0100; // enable byte 2
                 2'b11: byteEnable = 4'b1000; // enable byte 3
-                default: byteEnable = 4'b0000;
 
             endcase
 
@@ -342,8 +315,6 @@ module datapath (
                                     : 4'b1100; // high half
 
             3'b010: byteEnable = 4'b1111;
-
-            default: byteEnable = 4'b0000;
             
         endcase
     end

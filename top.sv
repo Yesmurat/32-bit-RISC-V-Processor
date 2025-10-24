@@ -6,19 +6,18 @@
 
 module top (
 
-    input logic clk,
-    input logic reset,
-    output logic [3:0] pc_out
-    // output logic [31:0] rd_instr,
-    // output logic memwritem,
-    // output logic [31:0] writedatam
+        input logic clk,
+        input logic reset,
+        output logic [3:0] pc_out
+        // output logic [31:0] rd_instr,
+        // output logic memwritem,
+        // output logic [31:0] writedatam
 
 );
 
     logic [31:0] ALUResultM, PCF, RD_instr, RD_data, WriteDataM;
     logic [3:0]  byteEnable;
     logic        MemWriteM;
-    logic        StallF;
 
     assign pc_out =     PCF[3:0];
     // assign rd_instr =   RD_instr;
@@ -34,21 +33,20 @@ module top (
         .ALUResultM(ALUResultM),
         .WriteDataM(WriteDataM),
         .MemWriteM(MemWriteM),
-        .byteEnable(byteEnable),
-        .StallF(StallF)
+        .byteEnable(byteEnable)
     );
 
     imem instr_mem (
-        .clk(clk),
-        .enable(~StallF),
-        .a(PCF[9:0]),
+        .a(PCF),
         .rd(RD_instr)
     );
 
     dmem data_mem (
-        .clk(clk), .we(MemWriteM),
+        .clk(clk),
+        .we(MemWriteM),
         .byteEnable(byteEnable),
-        .a(ALUResultM[9:0]), .wd(WriteDataM),
+        .a(ALUResultM),
+        .wd(WriteDataM),
         .rd(RD_data)
     );
     

@@ -1,17 +1,19 @@
 `timescale 1ns/1ps
 
-module riscv (input logic clk, reset,
-                        // inputs from Instruction and Data memories
-                        input logic [31:0] RD_instr, RD_data,
+module riscv (
+    
+    input logic clk,
+    input logic reset,
 
-                        // outputs to Instruction and Data memories
-                        output logic [31:0] PCF,
-                        output logic [31:0] ALUResultM, WriteDataM,
-                        output logic MemWriteM,
-                        output logic [3:0] byteEnable,
+    // inputs from Instruction and Data memories
+    input logic [31:0] RD_instr, RD_data,
 
-                        // output to instruction memory
-                        output logic StallF
+    // outputs to Instruction and Data memories
+    output logic [31:0] PCF,
+    output logic [31:0] ALUResultM, WriteDataM,
+    output logic MemWriteM,
+    output logic [3:0] byteEnable
+
     );
 
     // control signals
@@ -28,7 +30,7 @@ module riscv (input logic clk, reset,
     logic ResultSrcE_zero;
 
     // Hazard unit wires
-    logic StallD;
+    logic StallD, StallF;
     logic FlushD, FlushE;
     logic [1:0] ForwardAE, ForwardBE;
     logic PCSrcE;
@@ -38,6 +40,7 @@ module riscv (input logic clk, reset,
     logic [4:0] Rs1E, Rs2E, RdE;
     logic [4:0] RdM, RdW;
     logic RegWriteM, RegWriteW;
+    logic SrcAsrcE, ALUSrcE;
     logic MulBusy;
 
     logic [6:0] opcode;
@@ -121,6 +124,8 @@ module riscv (input logic clk, reset,
                 .RegWriteW(RegWriteW),
                 .RdM(RdM),
                 .RdW(RdW),
+                .SrcAsrcE(SrcAsrcE),
+                .ALUSrcE(ALUSrcE),
                 .MulBusy(MulBusy)
     );
 
@@ -133,11 +138,12 @@ module riscv (input logic clk, reset,
         .RegWriteM(RegWriteM),
         .RdW(RdW),
         .RegWriteW(RegWriteW),
+        .SrcAsrcE(SrcAsrcE),
+        .ALUSrcE(ALUSrcE),
         .MulBusy(MulBusy),
 
         .StallF(StallF),
         .StallD(StallD), 
-
         .FlushD(FlushD),
         .FlushE(FlushE),
         .ForwardAE(ForwardAE),

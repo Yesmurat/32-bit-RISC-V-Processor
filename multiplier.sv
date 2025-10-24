@@ -40,7 +40,7 @@ module multiplier(
         .P(mixed_result)
     );
 
-        always_ff @(posedge clk) begin
+    always_ff @(posedge clk) begin
 
         if (reset) begin
 
@@ -64,7 +64,7 @@ module multiplier(
                 end
 
                 else
-                    count <= count - 2'd1;
+                    count <= count - 1;
             end
 
         end

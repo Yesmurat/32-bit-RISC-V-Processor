@@ -9,6 +9,8 @@ module hazard (
                 input logic RegWriteM,
                 input logic [4:0] RdW,
                 input logic RegWriteW,
+                input logic SrcAsrcE,
+                input logic ALUSrcE,
                 input logic MulBusy,
 
                 output logic StallF, StallD,
@@ -20,24 +22,28 @@ module hazard (
 
     always_comb begin
 
-        // Forward to solve data hazards when possible
-        if ( ( (Rs1E == RdM) && RegWriteM ) && (Rs1E != 0) )
+        ForwardAE = 2'b00;
+        ForwardBE = 2'b00;
+
+        if (SrcAsrcE) begin
+            ForwardAE = 2'b11;
+        end
+
+        else if ( ( (Rs1E == RdM) && RegWriteM ) && (Rs1E != 0) )
             ForwardAE = 2'b10;
         
         else if ( ((Rs1E == RdW) && RegWriteW) && (Rs1E != 0) )
             ForwardAE = 2'b01;
-        
-        else
-            ForwardAE = 2'b00;
 
-        if ( ( (Rs2E == RdM) && RegWriteM ) && (Rs2E != 0) )
+        if (ALUSrcE) begin
+            ForwardAE = 2'b11;
+        end
+
+        else if ( ( (Rs2E == RdM) && RegWriteM ) && (Rs2E != 0) )
             ForwardBE = 2'b10;
 
         else if ( ((Rs2E == RdW) && RegWriteW) && (Rs2E != 0) )
             ForwardBE = 2'b01;
-
-        else
-            ForwardBE = 2'b00;
 
     end
 
