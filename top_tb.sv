@@ -13,8 +13,8 @@ module top_tb;
 
     top dut(
         .clk(clk),
-        .reset(reset),
-        .pc_out(pc_out),
+        .reset(reset)
+        // .pc_out(pc_out),
         // .rd_instr(rd_instr),
         // .memwritem(memwritem),
         // .writedatam(writedatam)

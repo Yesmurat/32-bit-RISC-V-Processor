@@ -297,11 +297,9 @@ module datapath (
 
     always_comb begin
 
-        byteEnable = 4'b0000;
-
         unique case (funct3M) // funct3 determines store type
 
-            3'b000: case (byteAddrM)
+            3'b000: unique case (byteAddrM)
 
                 2'b00: byteEnable = 4'b0001; // enable byte 0
                 2'b01: byteEnable = 4'b0010; // enable byte 1
@@ -315,6 +313,8 @@ module datapath (
                                     : 4'b1100; // high half
 
             3'b010: byteEnable = 4'b1111;
+
+            default: byteEnable = 4'b0;
             
         endcase
     end

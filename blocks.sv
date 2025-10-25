@@ -38,6 +38,7 @@ module mux5 (
             3'b010: y = d2;
             3'b011: y = d3;
             3'b100: y = d4;
+            default: y = 32'b0;
         endcase
     end
     
@@ -91,6 +92,7 @@ module ALU (input logic [31:0] d0, d1,
             4'b1000: y = d0 >> d1[4:0]; // srl/srli
             4'b0011: y = d0 | d1; // or/ori
             4'b0010: y = d0 & d1; // and/andi
+            default: y = 32'b0;
         endcase
     end
 endmodule // ALU
@@ -114,6 +116,7 @@ module branch_unit (input logic [31:0] SrcAE, SrcBE,
             3'b101: branchTakenE = !ltE; // bge
             3'b110: branchTakenE = ltuE; // bltu
             3'b111: branchTakenE = !ltuE; // bgeu
+            default: branchTakenE = 1'b0;
         endcase
     end
 endmodule // Branch unit

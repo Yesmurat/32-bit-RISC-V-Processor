@@ -4,7 +4,8 @@
 
 module dmem (
 
-        input logic clk, we,
+        // input logic clk,
+        input logic we,
         input logic [3:0] byteEnable,
         input logic [31:0] a,
         input logic [31:0] wd,
@@ -12,11 +13,12 @@ module dmem (
 
     );
 
-    (* rom_style="distributed", ram_init_file="dmem.mem" *) logic [31:0] RAM[63:0];
+    logic [31:0] RAM[63:0];
 
-    always_ff @(posedge clk) begin
+    initial $readmemh("dmem.mem", RAM);
+    assign rd = RAM[a[31:2]];
 
-        rd <= RAM[a[31:2]];
+    always_comb begin
         
         if (we) begin
             if (byteEnable[0]) RAM[a[31:2]][7:0] <= wd[7:0];
@@ -26,5 +28,13 @@ module dmem (
         end
 
     end
+
+    // data_memory data_mem(
+    //     .clk(clk)
+    //     .a(a[5:0]), // 6-bit
+    //     .d(wd), // 32-bit
+    //     .we(we),
+    //     .spo(rd) // 32-bit
+    // );
     
 endmodule // Data memory
