@@ -1,14 +1,14 @@
 // Top module of RV32IM RISC-V processor in SystemVerilog
 // Author: Yesmurat Sagyndyk
-// Date: 10/10/2025
+// Date: 25/10/2025
 
 `timescale 1ns/1ps
 
 module top (
 
         input logic clk,
-        input logic reset,
-        output logic [31:0] pc_out
+        input logic reset
+        // output logic [31:0] pc_out
         // output logic [31:0] rd_instr,
         // output logic memwritem,
         // output logic [31:0] writedatam
@@ -19,7 +19,7 @@ module top (
     logic [3:0]  byteEnable;
     logic        MemWriteM;
 
-    assign pc_out =     PCF;
+    // assign pc_out =     PCF;
     // assign rd_instr =   RD_instr;
     // assign memwritem =  MemWriteM;
     // assign writedatam = WriteDataM;
@@ -37,14 +37,12 @@ module top (
     );
 
     imem instr_mem (
-        // .clk(clk),
-        // .reset(reset),
         .a(PCF),
         .rd(RD_instr)
     );
 
     dmem data_mem (
-        // .clk(clk),
+        .clk(clk),
         .we(MemWriteM),
         .byteEnable(byteEnable),
         .a(ALUResultM),

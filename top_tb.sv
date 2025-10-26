@@ -6,18 +6,10 @@ module top_tb;
 
     logic clk;
     logic reset;
-    logic [3:0] pc_out;
-    // logic [31:0] rd_instr;
-    // logic memwritem;
-    // logic [31:0] writedatam;
 
     top dut(
         .clk(clk),
         .reset(reset)
-        // .pc_out(pc_out),
-        // .rd_instr(rd_instr),
-        // .memwritem(memwritem),
-        // .writedatam(writedatam)
     );
 
     initial clk = 0;
@@ -25,11 +17,8 @@ module top_tb;
 
     initial begin
         reset = 1;
-        #15;
+        #7;
         reset = 0;
-    end
-
-    initial begin
         #300;
         $stop;
     end

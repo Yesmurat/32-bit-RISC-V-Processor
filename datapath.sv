@@ -183,26 +183,55 @@ module datapath (
     assign ResultSrcE_zero = ResultSrcE[0];
 
     // SrcA mux
-    mux4 inputA(
+    // mux4 inputA(
+    //     .d0(RD1E),
+    //     .d1(ResultW),
+    //     .d2(ALUResultM),
+    //     .d3(PCE),
+    //     .s(ForwardAE),
+    //     .y(SrcAE)
+    // );
+
+    logic [31:0] SrcAE_input1;
+    mux3 SrcAE_input1mux(
         .d0(RD1E),
         .d1(ResultW),
         .d2(ALUResultM),
-        .d3(PCE),
         .s(ForwardAE),
+        .y(SrcAE_input1)
+    );
+
+    mux2 SrcAEmux(
+        .d0(SrcAE_input1),
+        .d1(PCE),
+        .s(SrcAsrcE),
         .y(SrcAE)
     );
 
     // SrcB mux
-    mux4 inputB(
+    // mux4 inputB(
+    //     .d0(RD2E),
+    //     .d1(ResultW),
+    //     .d2(ALUResultM),
+    //     .d3(ImmExtE),
+    //     .s(ForwardBE),
+    //     .y(SrcBE)
+    // );
+    
+    mux3 WriteDataEmux(
         .d0(RD2E),
         .d1(ResultW),
         .d2(ALUResultM),
-        .d3(ImmExtE),
         .s(ForwardBE),
-        .y(SrcBE)
+        .y(WriteDataE)
     );
 
-    assign WriteDataE = SrcBE;
+    mux2 SrcBEmux(
+        .d0(WriteDataE),
+        .d1(ImmExtE),
+        .s(ALUSrcE),
+        .y(SrcBE)
+    );
 
     branch_unit bu(
         .SrcAE(SrcAE), .SrcBE(SrcBE),
@@ -211,7 +240,7 @@ module datapath (
     );
 
     logic [31:0] adder_base;
-    assign adder_base = jumpRegE ? SrcAE : PCE;
+    assign adder_base = jumpRegE ? SrcAE_input1 : PCE;
 
     assign PCTargetE = adder_base + ImmExtE;
 

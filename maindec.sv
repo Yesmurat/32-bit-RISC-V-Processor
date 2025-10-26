@@ -22,7 +22,7 @@ module maindec (input logic [6:0] op,
             // ResultSrcD, BranchD, ALUOp, JumpD, SrcAsrcD, jumpRegD} = controls;
 
     always_comb begin
-        case (op)
+        unique case (op)
 
             // RegWrite_ImmSrc_ALUSrc_MemWrite_ResultSrc_Branch_ALUOp_Jump_SrcAsrcD_jumpRegD
 
@@ -37,7 +37,7 @@ module maindec (input logic [6:0] op,
                 BranchD = 1'b0;
                 ALUOp = 2'b00;
                 JumpD = 1'b0;
-                SrcAsrcD = 1'b1;
+                SrcAsrcD = 1'b0;
                 jumpRegD = 1'b1;
 
             end // I-type (loads)
@@ -53,7 +53,7 @@ module maindec (input logic [6:0] op,
                 BranchD = 1'b0;
                 ALUOp = 2'b00;
                 JumpD = 1'b0;
-                SrcAsrcD = 1'b1;
+                SrcAsrcD = 1'b0;
                 jumpRegD = 1'b1;
 
             end // S-type
@@ -71,7 +71,7 @@ module maindec (input logic [6:0] op,
                     BranchD = 1'b0;
                     ALUOp = 2'b10;
                     JumpD = 1'b0;
-                    SrcAsrcD = 1'b1;
+                    SrcAsrcD = 1'b0;
                     jumpRegD = 1'b1;
 
                 end
@@ -87,7 +87,7 @@ module maindec (input logic [6:0] op,
                     BranchD = 1'b0;
                     ALUOp = 2'b10;
                     JumpD = 1'b0;
-                    SrcAsrcD = 1'b1;
+                    SrcAsrcD = 1'b0;
                     jumpRegD = 1'b1;
                     
                 end
@@ -105,7 +105,7 @@ module maindec (input logic [6:0] op,
                 BranchD = 1'b0;
                 ALUOp = 2'b10;
                 JumpD = 1'b0;
-                SrcAsrcD = 1'b1;
+                SrcAsrcD = 1'b0;
                 jumpRegD = 1'b1;
 
             end // I-type (immediates)
@@ -121,7 +121,7 @@ module maindec (input logic [6:0] op,
                 BranchD = 1'b1;
                 ALUOp = 2'b01;
                 JumpD = 1'b0;
-                SrcAsrcD = 1'b1;
+                SrcAsrcD = 1'b0;
                 jumpRegD = 1'b1;
 
             end // B-type
@@ -153,7 +153,7 @@ module maindec (input logic [6:0] op,
                 BranchD = 1'b0;
                 ALUOp = 2'b00;
                 JumpD = 1'b0;
-                SrcAsrcD = 1'b0;
+                SrcAsrcD = 1'b1;
                 jumpRegD = 1'b1;
 
             end // U-type (auipc)
@@ -185,23 +185,23 @@ module maindec (input logic [6:0] op,
                 BranchD = 1'b0;
                 ALUOp = 2'b00;
                 JumpD = 1'b1;
-                SrcAsrcD = 1'b1;
+                SrcAsrcD = 1'b0;
                 jumpRegD = 1'b0;
 
             end // jalr
             
             default: begin
                 
-                RegWriteD = 1'b1;
+                RegWriteD = 1'b0;
                 ImmSrcD = 3'b000;
-                ALUSrcD = 1'b1;
+                ALUSrcD = 1'b0;
                 MemWriteD = 1'b0;
-                ResultSrcD = 3'b001;
+                ResultSrcD = 3'b000;
                 BranchD = 1'b0;
                 ALUOp = 2'b00;
                 JumpD = 1'b0;
-                SrcAsrcD = 1'b1;
-                jumpRegD = 1'b1;
+                SrcAsrcD = 1'b0;
+                jumpRegD = 1'b0;
 
             end
         endcase

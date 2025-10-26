@@ -1,10 +1,10 @@
 `timescale 1ns/1ps
+// Instruction memory 64 words x 32 bits
 
-// memory depth = 64
 
 module dmem (
 
-        // input logic clk,
+        input logic clk,
         input logic we,
         input logic [3:0] byteEnable,
         input logic [31:0] a,
@@ -13,14 +13,16 @@ module dmem (
 
     );
 
-    logic [31:0] RAM[63:0];
+    logic [31:0] RAM[255:0];
 
     initial $readmemh("dmem.mem", RAM);
+
     assign rd = RAM[a[31:2]];
 
-    always_comb begin
+    always_ff @(posedge clk) begin
         
         if (we) begin
+
             if (byteEnable[0]) RAM[a[31:2]][7:0] <= wd[7:0];
             if (byteEnable[1]) RAM[a[31:2]][15:8] <= wd[15:8];
             if (byteEnable[2]) RAM[a[31:2]][23:16] <= wd[23:16];
@@ -28,13 +30,5 @@ module dmem (
         end
 
     end
-
-    // data_memory data_mem(
-    //     .clk(clk)
-    //     .a(a[5:0]), // 6-bit
-    //     .d(wd), // 32-bit
-    //     .we(we),
-    //     .spo(rd) // 32-bit
-    // );
     
 endmodule // Data memory
