@@ -1,8 +1,0 @@
-; Memory initialization file for Single Port ROM
-; Instruction Memory
-
-memory_initialization_radix = 16;
-memory_initialization_vector = 
-00a00093,
-00508113,
-022081b3;

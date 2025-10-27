@@ -251,25 +251,32 @@ module datapath (
         .y(ALUResultE)
     );
 
+    // Multiplier Interface
     logic [31:0] multiplier_resultE;
-    logic mul_busy;
-    logic ex_is_mul;
-    logic mul_issue;
+    logic        mul_busy;
+    logic        ex_is_mul;
+    logic        mul_issue;
+    logic        mul_issue_d;
 
     // Detect and issue multiplication
     assign ex_is_mul = ResultSrcE[2];
-    assign mul_issue = ex_is_mul & ~mul_busy;
+    /*
+        the line above works only because the select signal of the WB mux
+        is 3 bits and the multiplication result selection signal is 100.
+        ResultSrcE[2] is 1 only when the instruction is multiplication
+    */
 
-    // output MulBusy is mul_busy
-    assign MulBusy = mul_busy;
+    // Generate a one-cycle pulse on rising edge of mul_issue
+    always_ff @(posedge clk or posedge reset) begin
+        if (reset) mul_issue_d <= 1'b0;
+        else mul_issue_d <= ex_is_mul & ~mul_busy;
+    end
 
-    // Hold EX & MEM stages while multiplier is busy
-    assign en_idex = ~mul_busy;
-    assign en_exmem = ~mul_busy;
+    assign mul_issue = (ex_is_mul & ~mul_busy) & ~mul_issue_d; 
 
     multiplier multiplier(
        .clk(clk),
-       .start(mul_issue), // pulse once
+       .start(mul_issue),
        .reset(reset),
        .funct3(funct3E),
        .a(SrcAE),
@@ -277,6 +284,11 @@ module datapath (
        .result(multiplier_resultE),
        .busy(mul_busy)
    );
+
+   assign MulBusy = mul_busy;
+
+   assign en_idex = ~mul_busy;
+   assign en_exmem = ~mul_busy;
 
     // Memory write (MEM) stage
     logic [31:0] PCPlus4M;
