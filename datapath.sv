@@ -266,7 +266,7 @@ module datapath (
    assign MulBusy = mul_busy;
 
    assign en_idex = ~mul_busy && ~mul_issue;
-   assign en_exmem = ~mul_busy && ~mul_issue;
+   assign en_exmem = ~mul_busy;
 
     // Memory write (MEM) stage
     logic [31:0] PCPlus4M;
