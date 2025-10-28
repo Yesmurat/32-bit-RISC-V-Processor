@@ -1,5 +1,19 @@
 // Multiplier with 3-cycle latency and single-start handshake
 
+/*
+Clock Enable signal allows the flip-flop in the multiplier to be registered. So, as long as clock enable is high, multiplier works.
+Our multiplier is 3 cycles long. On cycle 3, it outputs the product.
+
+How multiplier works: on cycle 0 multipication start; on cycle 1 multiplication still works;
+on cycle 2 product is product is produced
+
+How it should it work between EX and MEM stages:
+    Cycle 0: multiplication is issued; start = 1; count = 0
+    Cycle 1: start = 0; count = 2
+    Cycle 2: count = 1; multiplication result is available and is chosen based on funct3
+    Cycle 3: count = 0; multiplication result goes to MEM stage
+*/
+
 `timescale 1ns/1ps
 
 module multiplier(
@@ -18,14 +32,9 @@ module multiplier(
     logic [63:0] signed_multiplication_result;
     logic [31:0] unsigned_multiplication_result, mixed_result;
 
-    /*
-    Clock Enable signal allows the flip-flop in the multiplier to be registered.
-    So, as long as clock enable is high, multiplier works?
-    */
-
     unsigned_multiplier unsigned_multiplication (
         .CLK(clk),
-        .CE(start || busy), // trying using signal "busy" instead of "start"
+        .CE(start || busy),
         .A(a),
         .B(b),
         .P(unsigned_multiplication_result)
@@ -33,7 +42,7 @@ module multiplier(
 
     signed_multiplier signed_multiplication (
         .CLK(clk),
-        .CE(start || busy), // same as above
+        .CE(start || busy),
         .A(a),
         .B(b),
         .P(signed_multiplication_result)
@@ -41,7 +50,7 @@ module multiplier(
 
     mixed_multiplier mixed_multiplication (
         .CLK(clk),
-        .CE(start || busy), // same as above
+        .CE(start || busy),
         .A(a),
         .B(b),
         .P(mixed_result)
@@ -58,39 +67,51 @@ module multiplier(
         else begin
 
             if (start && !busy) begin
+
                 // Launch new multiplication
                 busy <= 1'b1;
-                count <= 2'd2; // wait for 3 cycles total
+                count <= 2'd2;
+
             end
 
             else if (busy) begin
 
-                if (count != 0) begin
-                    count <= count - 1;
-                end
+                unique case (count)
 
-                else begin // count == 0
+                    2'd2: count <= count -1;
 
-                    // Done this cycle
-                    busy <= 1'b0;
-                    count <= 2'b0;
+                    2'd1: begin
+                        // unique case (funct3)
+                        //     3'b000: result <= signed_multiplication_result[31:0];
+                        //     3'b001: result <= signed_multiplication_result[63:32];
+                        //     3'b010: result <= mixed_result;
+                        //     3'b011: result <= unsigned_multiplication_result;
+                        //     default: result <= 32'b0;
+                        // endcase
 
-                    // result <= signed_multiplication_result[31:0];
-
-                    unique case (funct3)
-                        3'b000: result <= signed_multiplication_result[31:0]; // mul
-                        3'b001: result <= signed_multiplication_result[63:32]; // mulh
-                        3'b010: result <= mixed_result;                       // mulhsu
-                        3'b011: result <= unsigned_multiplication_result;     // mulhu
-                        default: result <= 32'b0;
-                    endcase
-
-                end
+                        count <= count - 1;
+                    end
+                    
+                endcase
 
             end
 
         end
 
+    end
+
+    always_comb begin
+        if (count == 2'b0) begin
+            unique case (funct3)
+                3'b000: result = signed_multiplication_result[31:0];
+                3'b001: result = signed_multiplication_result[63:32];
+                3'b010: result = mixed_result;
+                3'b011: result = unsigned_multiplication_result;
+                default: result = 32'b0;
+            endcase
+
+        busy = 1'b0;
+        end
     end
 
 endmodule

@@ -46,8 +46,6 @@ module datapath (
     output logic PCSrcE, ResultSrcE_zero, RegWriteM, RegWriteW,
     output logic [4:0] RdM, // output from MEM stage
     output logic [4:0] RdW, // output from WB stage
-    output logic SrcAsrcE,
-    output logic ALUSrcE,
     output logic MulBusy
 
 );
@@ -128,6 +126,7 @@ module datapath (
     logic [31:0] SrcAE, SrcBE;
     logic [31:0] WriteDataE;
     logic [31:0] ALUResultE;
+    logic SrcAsrcE, ALUSrcE;
 
     logic RegWriteE;
     logic [2:0] ResultSrcE;
@@ -181,18 +180,10 @@ module datapath (
 
     assign PCSrcE = (BranchE & branchTakenE) | JumpE;
     assign ResultSrcE_zero = ResultSrcE[0];
-
-    // SrcA mux
-    // mux4 inputA(
-    //     .d0(RD1E),
-    //     .d1(ResultW),
-    //     .d2(ALUResultM),
-    //     .d3(PCE),
-    //     .s(ForwardAE),
-    //     .y(SrcAE)
-    // );
-
     logic [31:0] SrcAE_input1;
+
+    // SrcA muxes
+    
     mux3 SrcAE_input1mux(
         .d0(RD1E),
         .d1(ResultW),
@@ -208,15 +199,7 @@ module datapath (
         .y(SrcAE)
     );
 
-    // SrcB mux
-    // mux4 inputB(
-    //     .d0(RD2E),
-    //     .d1(ResultW),
-    //     .d2(ALUResultM),
-    //     .d3(ImmExtE),
-    //     .s(ForwardBE),
-    //     .y(SrcBE)
-    // );
+    // SrcB muxes
     
     mux3 WriteDataEmux(
         .d0(RD2E),
@@ -260,11 +243,6 @@ module datapath (
 
     // Detect and issue multiplication
     assign ex_is_mul = ResultSrcE[2];
-    /*
-        the line above works only because the select signal of the WB mux
-        is 3 bits and the multiplication result selection signal is 100.
-        ResultSrcE[2] is 1 only when the instruction is multiplication
-    */
 
     // Generate a one-cycle pulse on rising edge of mul_issue
     always_ff @(posedge clk or posedge reset) begin
@@ -287,22 +265,19 @@ module datapath (
 
    assign MulBusy = mul_busy;
 
-   assign en_idex = ~mul_busy;
-   assign en_exmem = ~mul_busy;
+   assign en_idex = ~mul_busy && ~mul_issue;
+   assign en_exmem = ~mul_busy && ~mul_issue;
 
     // Memory write (MEM) stage
     logic [31:0] PCPlus4M;
     logic [2:0] funct3M;
-    
     logic [2:0] ResultSrcM;
-
     logic [1:0] byteAddrM;
-    assign byteAddrM = ALUResultM[1:0];
-
     logic [31:0] load_data;
     logic [31:0] ImmExtM;
-
     logic [31:0] multiplier_resultM;
+
+    assign byteAddrM = ALUResultM[1:0];
 
     EXMEMregister exmemreg(
         .clk(clk),
@@ -336,6 +311,7 @@ module datapath (
         .multiplier_resultM(multiplier_resultM)
     );
 
+    // byte loads
     always_comb begin
 
         unique case (funct3M) // funct3 determines store type

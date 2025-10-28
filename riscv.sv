@@ -40,7 +40,6 @@ module riscv (
     logic [4:0] Rs1E, Rs2E, RdE;
     logic [4:0] RdM, RdW;
     logic RegWriteM, RegWriteW;
-    logic SrcAsrcE, ALUSrcE;
     logic MulBusy;
 
     logic [6:0] opcode;
@@ -124,8 +123,6 @@ module riscv (
                 .RegWriteW(RegWriteW),
                 .RdM(RdM),
                 .RdW(RdW),
-                .SrcAsrcE(SrcAsrcE),
-                .ALUSrcE(ALUSrcE),
                 .MulBusy(MulBusy)
     );
 
@@ -138,8 +135,6 @@ module riscv (
         .RegWriteM(RegWriteM),
         .RdW(RdW),
         .RegWriteW(RegWriteW),
-        .SrcAsrcE(SrcAsrcE),
-        .ALUSrcE(ALUSrcE),
         .MulBusy(MulBusy),
 
         .StallF(StallF),
