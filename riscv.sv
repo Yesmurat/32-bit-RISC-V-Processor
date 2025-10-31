@@ -40,7 +40,7 @@ module riscv (
     logic [4:0] Rs1E, Rs2E, RdE;
     logic [4:0] RdM, RdW;
     logic RegWriteM, RegWriteW;
-    logic MulBusy;
+    logic stalled;
 
     logic [6:0] opcode;
     logic [2:0] funct3;
@@ -123,7 +123,7 @@ module riscv (
                 .RegWriteW(RegWriteW),
                 .RdM(RdM),
                 .RdW(RdW),
-                .MulBusy(MulBusy)
+                .stalled(stalled)
     );
 
     hazard hazard_unit (
@@ -135,7 +135,7 @@ module riscv (
         .RegWriteM(RegWriteM),
         .RdW(RdW),
         .RegWriteW(RegWriteW),
-        .MulBusy(MulBusy),
+        .stalled(stalled),
 
         .StallF(StallF),
         .StallD(StallD), 

@@ -2,22 +2,23 @@
 
 module multiplier(
 
-    input logic         clk,
-    input logic         reset,
-    input logic         ce,
-    input logic [2:0]   funct3,
-    input logic [31:0]  a, b,
-    output logic [31:0] result,
-    output logic        busy,
-    output logic        stall_idex,
-    output logic        stall_exmem
+    input logic             clk,
+    input logic             reset,
+    input logic             ce,
+    input logic  [2:0]      funct3,
+    input logic  [31:0]     a, b,
+
+    output logic [31:0]     result,
+    output logic            stalled
     
 );
 
     logic [63:0] signed_multiplication_result;
-    logic [31:0] unsigned_multiplication_result, mixed_result;
+    logic [31:0] unsigned_multiplication_result;
+    logic [31:0] mixed_result;
+    logic busy;
 
-    typedef enum logic [2:0] { IDLE, S0, S1, S2} state_t;
+    typedef enum logic [1:0] { IDLE, S0, S1, S2} state_t;
     state_t state, next_state;
 
     // state transition
@@ -30,44 +31,33 @@ module multiplier(
     always_comb begin
 
         next_state = state;
+        stalled = 0;
 
         unique case (state)
 
             IDLE: if (ce) begin
                 next_state = S0;
-                stall_idex = 1;
-                stall_exmem = 1;
+                stalled = 1;
             end
 
             S0: begin
                 next_state = S1;
-                stall_idex = 1;
-                stall_exmem = 1;
+                stalled = 1;
             end
 
             S1: begin
                 next_state = S2;
-                stall_idex = 1;
-                stall_exmem = 1;
+                stalled = 1;
             end
 
             S2: begin
-                // next_state = S3;
                 next_state = IDLE;
-                stall_idex = 0;
-                stall_exmem = 0;
+                stalled = 0;
             end
-
-            // S3: begin
-            //     next_state = IDLE;
-            //     stall_idex = 0;
-            //     stall_exmem = 0;
-            // end
 
             default: begin
                 next_state = IDLE;
-                stall_idex = 0;
-                stall_exmem = 0;
+                stalled = 0;
             end
         endcase
 

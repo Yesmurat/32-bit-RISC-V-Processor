@@ -2,42 +2,45 @@
 
 module datapath (
 
-    input logic clk,
-    input logic reset,
+    input logic         clk,
+    input logic         reset,
 
     // Control signals
-    input logic RegWriteD,
-    input logic [2:0] ResultSrcD,
-    input logic MemWriteD,
-    input logic JumpD,
-    input logic BranchD,
-    input logic [3:0] ALUControlD,
-    input logic ALUSrcD,
-    input logic [2:0] ImmSrcD,
-    input logic SrcAsrcD,
-    input logic [2:0] funct3D,
-    input logic jumpRegD,
+    input logic         RegWriteD,
+    input logic [2:0]   ResultSrcD,
+    input logic         MemWriteD,
+    input logic         JumpD,
+    input logic         BranchD,
+    input logic [3:0]   ALUControlD,
+    input logic         ALUSrcD,
+    input logic [2:0]   ImmSrcD,
+    input logic         SrcAsrcD,
+    input logic [2:0]   funct3D,
+    input logic         jumpRegD,
                 
     // inputs from Hazard Unit
-    input logic StallF, StallD,
-    input logic FlushD, FlushE,
-    input logic [1:0] ForwardAE, ForwardBE,
+    input logic         StallF,
+    input logic         StallD,
+    input logic         FlushD,
+    input logic         FlushE,
+    input logic [1:0]   ForwardAE,
+    input logic [1:0]   ForwardBE,
 
     // inputs from memories
-    input logic [31:0] RD_instr,
-    input logic [31:0] RD_data,
+    input logic [31:0]  RD_instr,
+    input logic [31:0]  RD_data,
 
     // outputs to instruction and data memories
     output logic [31:0] PCF, // input to Instruction Memory
     output logic [31:0] ALUResultM, WriteDataM, // inputs to Data Memory
-    output logic MemWriteM, // we signal to data memory
+    output logic        MemWriteM, // we signal to data memory
 
     // inputs to Control Unit
-    output logic [6:0] opcode,
-    output logic [2:0] funct3,
-    output logic [6:0] funct7,
+    output logic [6:0]  opcode,
+    output logic [2:0]  funct3,
+    output logic [6:0]  funct7,
 
-    output logic [3:0] byteEnable, // input to data memory
+    output logic [3:0]  byteEnable, // input to data memory
 
     // outputs to Hazard Unit
     output logic [4:0] Rs1D, Rs2D, // outputs from ID stage
@@ -46,7 +49,7 @@ module datapath (
     output logic PCSrcE, ResultSrcE_zero, RegWriteM, RegWriteW,
     output logic [4:0] RdM, // output from MEM stage
     output logic [4:0] RdW, // output from WB stage
-    output logic MulBusy
+    output logic stalled
 
 );
 
@@ -136,11 +139,9 @@ module datapath (
     logic branchTakenE;
     logic jumpRegE;
 
-    logic stall_idex, stall_exmem;
-
     IDEXregister idexreg(
         .clk(clk),
-        .en(~stall_idex),
+        .en(~stalled),
         .reset(FlushE | reset),
         // ID stage control signals
         .RegWriteD(RegWriteD),
@@ -236,7 +237,6 @@ module datapath (
 
     // Multiplier Interface
     logic [31:0] multiplier_resultE;
-    logic        mul_busy;
     logic        ex_is_mul;
 
     // Detect and issue multiplication
@@ -250,12 +250,8 @@ module datapath (
        .a(SrcAE),
        .b(SrcBE),
        .result(multiplier_resultE),
-       .busy(mul_busy),
-       .stall_idex(stall_idex),
-       .stall_exmem(stall_exmem)
+       .stalled(stalled)
    );
-
-   assign MulBusy = mul_busy;
 
     // Memory write (MEM) stage
     logic [31:0] PCPlus4M;
@@ -270,7 +266,7 @@ module datapath (
 
     EXMEMregister exmemreg(
         .clk(clk),
-        .en(~stall_exmem),
+        .en(~stalled),
         .reset(reset),
         // EX stage control signals
         .RegWriteE(RegWriteE),
@@ -339,6 +335,12 @@ module datapath (
     logic [31:0] ImmExtW;
     logic [2:0] ResultSrcW;
     logic [31:0] multiplier_resultW;
+
+    /*
+    Be aware that during multiplication, the output of MEM
+    register always outputs the same thing and in WB you repeat
+    adding a value to the register
+    */
 
     MEMWBregister wbreg(
         .clk(clk),

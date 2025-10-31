@@ -9,7 +9,7 @@ module hazard (
                 input logic RegWriteM,
                 input logic [4:0] RdW,
                 input logic RegWriteW,
-                input logic MulBusy,
+                input logic stalled,
 
                 output logic StallF, StallD,
                 output logic FlushD, FlushE,
@@ -42,8 +42,8 @@ module hazard (
     assign lwStall = ResultSrcE_zero & ( (Rs1D == RdE) | (Rs2D == RdE) );
 
     // Stall IF and ID when a load hazard occurs
-    assign StallF = lwStall | MulBusy;
-    assign StallD = lwStall | MulBusy;
+    assign StallF = lwStall | stalled;
+    assign StallD = lwStall | stalled;
 
     // Flush when a branch is taken, jump occurs, or a load introduces a bubble
     assign FlushD = PCSrcE;
