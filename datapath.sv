@@ -136,11 +136,11 @@ module datapath (
     logic branchTakenE;
     logic jumpRegE;
 
-    logic en_idex, en_exmem;
+    logic stall_idex, stall_exmem;
 
     IDEXregister idexreg(
         .clk(clk),
-        .en(en_idex),
+        .en(~stall_idex),
         .reset(FlushE | reset),
         // ID stage control signals
         .RegWriteD(RegWriteD),
@@ -250,12 +250,12 @@ module datapath (
        .a(SrcAE),
        .b(SrcBE),
        .result(multiplier_resultE),
-       .busy(mul_busy)
+       .busy(mul_busy),
+       .stall_idex(stall_idex),
+       .stall_exmem(stall_exmem)
    );
 
    assign MulBusy = mul_busy;
-   assign en_idex = ~ex_is_mul ...;
-   assign en_exmem = ~ex_is_mul ...;
 
     // Memory write (MEM) stage
     logic [31:0] PCPlus4M;
@@ -270,7 +270,7 @@ module datapath (
 
     EXMEMregister exmemreg(
         .clk(clk),
-        .en(en_exmem),
+        .en(~stall_exmem),
         .reset(reset),
         // EX stage control signals
         .RegWriteE(RegWriteE),

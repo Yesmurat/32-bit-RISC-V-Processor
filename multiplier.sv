@@ -8,15 +8,72 @@ module multiplier(
     input logic [2:0]   funct3,
     input logic [31:0]  a, b,
     output logic [31:0] result,
-    output logic        busy
+    output logic        busy,
+    output logic        stall_idex,
+    output logic        stall_exmem
     
 );
 
-    logic [1:0] count; // 3-cycle counter
     logic [63:0] signed_multiplication_result;
     logic [31:0] unsigned_multiplication_result, mixed_result;
 
-    localparam S0, S1, S2, S3;
+    typedef enum logic [2:0] { IDLE, S0, S1, S2} state_t;
+    state_t state, next_state;
+
+    // state transition
+    always_ff @(posedge clk or posedge reset) begin
+        if (reset) state <= IDLE;
+        else state <= next_state;
+    end
+
+    // next state logic
+    always_comb begin
+
+        next_state = state;
+
+        unique case (state)
+
+            IDLE: if (ce) begin
+                next_state = S0;
+                stall_idex = 1;
+                stall_exmem = 1;
+            end
+
+            S0: begin
+                next_state = S1;
+                stall_idex = 1;
+                stall_exmem = 1;
+            end
+
+            S1: begin
+                next_state = S2;
+                stall_idex = 1;
+                stall_exmem = 1;
+            end
+
+            S2: begin
+                // next_state = S3;
+                next_state = IDLE;
+                stall_idex = 0;
+                stall_exmem = 0;
+            end
+
+            // S3: begin
+            //     next_state = IDLE;
+            //     stall_idex = 0;
+            //     stall_exmem = 0;
+            // end
+
+            default: begin
+                next_state = IDLE;
+                stall_idex = 0;
+                stall_exmem = 0;
+            end
+        endcase
+
+    end
+
+    assign busy = (state == S0) || (state == S1) || (state == S2);
 
     unsigned_multiplier unsigned_multiplication (
         .CLK(clk),
@@ -28,7 +85,7 @@ module multiplier(
 
     signed_multiplier signed_multiplication (
         .CLK(clk),
-        .CE(ce | busy),
+        .CE(ce || busy),
         .A(a),
         .B(b),
         .P(signed_multiplication_result)
@@ -36,39 +93,20 @@ module multiplier(
 
     mixed_multiplier mixed_multiplication (
         .CLK(clk),
-        .CE(ce | busy),
+        .CE(ce || busy),
         .A(a),
         .B(b),
         .P(mixed_result)
     );
 
-    always_ff @( posedge clk ) begin : counter
-        
-        if (reset) begin
-            count <= 2'b0;
-            result <= 32'b0;
-            busy <= 1'b0;
-        end
-
-        else if (ce) begin
-
-            busy <= 1'b1;
-            count <= count + 1;
-
-        end
-
-    end
-
     always_comb begin
         
         unique case (funct3)
-
             3'b000: result = signed_multiplication_result[31:0];
             3'b001: result = signed_multiplication_result[63:32];
             3'b010: result = mixed_result;
             3'b011: result = unsigned_multiplication_result;
             default: result = 32'b0;
-
         endcase
 
     end
