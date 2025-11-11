@@ -31,24 +31,24 @@ module datapath (
     input logic [31:0]  RD_data,
 
     // outputs to instruction and data memories
-    output logic [31:0] PCF, // input to Instruction Memory
-    output logic [31:0] ALUResultM, WriteDataM, // inputs to Data Memory
-    output logic        MemWriteM, // we signal to data memory
+    output logic [31:0] PCF,
+
+    output logic [31:0] ALUResultM, WriteDataM,
+    output logic [3:0]  byteEnable,
+    output logic        MemWriteM,
 
     // inputs to Control Unit
     output logic [6:0]  opcode,
     output logic [2:0]  funct3,
     output logic [6:0]  funct7,
 
-    output logic [3:0]  byteEnable, // input to data memory
-
     // outputs to Hazard Unit
-    output logic [4:0] Rs1D, Rs2D, // outputs from ID stage
+    output logic [4:0] Rs1D, Rs2D,
     output logic [4:0] Rs1E, Rs2E,
-    output logic [4:0] RdE, // outputs from EX stage
+    output logic [4:0] RdE,
     output logic PCSrcE, ResultSrcE_zero, RegWriteM, RegWriteW,
-    output logic [4:0] RdM, // output from MEM stage
-    output logic [4:0] RdW, // output from WB stage
+    output logic [4:0] RdM,
+    output logic [4:0] RdW,
     output logic stalled
 
 );
@@ -235,22 +235,57 @@ module datapath (
         .y(ALUResultE)
     );
 
-    // Multiplier Interface
-    logic [31:0] multiplier_resultE;
-    logic        ex_is_mul;
+    // Mult/Div Interface
 
-    // Detect and issue multiplication
-    assign ex_is_mul = ResultSrcE[2];
+    logic [31:0] multiplier_resultE, divider_resultE;
+    logic ex_is_muldiv, ex_mul, ex_div, mul_stall, div_stall;
 
-    multiplier multiplier(
+    assign ex_is_muldiv = ResultSrcE[2];
+    
+    always_comb begin
+
+        ex_mul = 0;
+        ex_div = 0;
+
+        if (ex_is_muldiv) begin
+
+            if (funct3E[2]) ex_div = 1; // div
+            else ex_mul = 1; // mult
+
+        end
+        
+    end
+    
+    assign stalled = mul_stall | div_stall;
+
+    // In the future, make more advanced control module to use either ALU, mult, or div to reduce power consumption
+
+    multiplier multiplier (
+
        .clk(clk),
-       .ce(ex_is_mul),
+       .ce(ex_mul),
        .reset(reset),
        .funct3(funct3E),
        .a(SrcAE),
        .b(SrcBE),
-       .result(multiplier_resultE),
-       .stalled(stalled)
+
+       .stall(mul_stall),
+       .result(multiplier_resultE)
+
+   );
+
+   divider divider (
+
+    .clk(clk),
+    .ex_is_div(ex_div),
+    .reset(reset),
+    .funct3(funct3E),
+    .a(SrcAE),
+    .b(SrcBE),
+    
+    .stall(div_stall),
+    .result(divider_resultE)
+
    );
 
     // Memory write (MEM) stage
@@ -261,6 +296,7 @@ module datapath (
     logic [31:0] load_data;
     logic [31:0] ImmExtM;
     logic [31:0] multiplier_resultM;
+    logic [31:0] divider_resultM;
 
     assign byteAddrM = ALUResultM[1:0];
 
@@ -287,13 +323,15 @@ module datapath (
         .ImmExtE(ImmExtE),
         .PCPlus4E(PCPlus4E),
         .multiplier_resultE(multiplier_resultE),
+        .divider_resultE(divider_resultE),
 
         .ALUResultM(ALUResultM), // output to Data Memory
         .WriteDataM(WriteDataM),
         .RdM(RdM),
         .ImmExtM(ImmExtM),
         .PCPlus4M(PCPlus4M),
-        .multiplier_resultM(multiplier_resultM)
+        .multiplier_resultM(multiplier_resultM),
+        .divider_resultM(divider_resultM)
     );
 
     // byte loads
@@ -328,22 +366,29 @@ module datapath (
         .load_data(load_data)
     );
 
+    // choose between mult/div results
+    logic [31:0] multdiv_resultM;
+    assign multdiv_resultM = funct3M[2] ? divider_resultM : multiplier_resultM;
+    // look at RV32IM specification if confused
+
+
     // Register file writeback (WB) stage
     logic [31:0] ALUResultW;
     logic [31:0] ReadDataW;
     logic [31:0] PCPlus4W;
     logic [31:0] ImmExtW;
     logic [2:0] ResultSrcW;
-    logic [31:0] multiplier_resultW;
+    logic [31:0] multdiv_resultW;
 
     /*
-    Be aware that during multiplication, the output of MEM
+    Note that during multiplication, the output of MEM
     register always outputs the same thing and in WB you repeat
     adding a value to the register
     */
 
     MEMWBregister wbreg(
         .clk(clk),
+        .en(~stalled),
         .reset(reset),
         
         // MEM stage control signals
@@ -354,20 +399,20 @@ module datapath (
         .RegWriteW(RegWriteW),
         .ResultSrcW(ResultSrcW),
 
-        // datapath inputs & outputs
+        // datapath inputs/outputs
         .ALUResultM(ALUResultM),
         .load_data(load_data),
         .RdM(RdM),
         .ImmExtM(ImmExtM),
         .PCPlus4M(PCPlus4M),
-        .multiplier_resultM(multiplier_resultM),
+        .multdiv_resultM(multdiv_resultM),
 
         .ALUResultW(ALUResultW),
         .ReadDataW(ReadDataW),
         .RdW(RdW),
         .ImmExtW(ImmExtW),
         .PCPlus4W(PCPlus4W),
-        .multiplier_resultW(multiplier_resultW)
+        .multdiv_resultW(multdiv_resultW)
     );
 
     mux5 ResultWmux(
@@ -375,7 +420,7 @@ module datapath (
         .d1(ReadDataW),
         .d2(PCPlus4W),
         .d3(ImmExtW),
-        .d4(multiplier_resultW),
+        .d4(multdiv_resultW),
         .s(ResultSrcW),
         .y(ResultW)
     );

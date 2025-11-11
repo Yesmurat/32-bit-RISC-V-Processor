@@ -25,7 +25,7 @@ module controller (input logic [6:0] op,
 
     maindec md(
         .op(op),
-        .funct7(funct7),
+        .funct7_b0(funct7[0]),
         .ResultSrcD(ResultSrcD),
         .MemWriteD(MemWriteD),
         .BranchD(BranchD),

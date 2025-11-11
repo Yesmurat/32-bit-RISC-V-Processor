@@ -142,13 +142,15 @@ module EXMEMregister (input logic clk, en, reset, // EX -> MEM
                     input logic [31:0] ImmExtE,
                     input logic [31:0] PCPlus4E,
                     input logic [31:0] multiplier_resultE,
+                    input logic [31:0] divider_resultE,
 
                     output logic [31:0] ALUResultM,
                     output logic [31:0] WriteDataM,
                     output logic [4:0] RdM,
                     output logic [31:0] ImmExtM,
                     output logic [31:0] PCPlus4M,
-                    output logic [31:0] multiplier_resultM
+                    output logic [31:0] multiplier_resultM,
+                    output logic [31:0] divider_resultM
 
 );
 
@@ -166,6 +168,7 @@ module EXMEMregister (input logic clk, en, reset, // EX -> MEM
             ImmExtM <= 32'b0;
             PCPlus4M <= 32'b0;
             multiplier_resultM <= 32'b0;
+            divider_resultM <= 32'b0;
         end
         
         else if (en) begin
@@ -180,12 +183,13 @@ module EXMEMregister (input logic clk, en, reset, // EX -> MEM
             ImmExtM <= ImmExtE;
             PCPlus4M <= PCPlus4E;
             multiplier_resultM <= multiplier_resultE;
+            divider_resultM <= divider_resultE;
         end
 
     end  
 endmodule
 
-module MEMWBregister (input logic clk, reset, // MEM -> WB
+module MEMWBregister (input logic clk, en, reset, // MEM -> WB
 
                     // MEM stage control signals
                     input logic RegWriteM,
@@ -201,14 +205,14 @@ module MEMWBregister (input logic clk, reset, // MEM -> WB
                     input logic [4:0] RdM,
                     input logic [31:0] ImmExtM,
                     input logic [31:0] PCPlus4M,
-                    input logic [31:0] multiplier_resultM,
+                    input logic [31:0] multdiv_resultM,
 
                     output logic [31:0] ALUResultW,
                     output logic [31:0] ReadDataW,
                     output logic [4:0] RdW,
                     output logic [31:0] ImmExtW,
                     output logic [31:0] PCPlus4W,
-                    output logic [31:0] multiplier_resultW
+                    output logic [31:0] multdiv_resultW
 
 );
 
@@ -223,10 +227,10 @@ module MEMWBregister (input logic clk, reset, // MEM -> WB
             RdW <= 5'b0;
             ImmExtW <= 32'b0;
             PCPlus4W <= 32'b0;
-            multiplier_resultW <= 32'b0;
+            multdiv_resultW <= 32'b0;
         end
 
-        else begin
+        else if (en) begin
             RegWriteW <= RegWriteM;
             ResultSrcW <= ResultSrcM;
 
@@ -235,7 +239,7 @@ module MEMWBregister (input logic clk, reset, // MEM -> WB
             RdW <= RdM;
             ImmExtW <= ImmExtM;
             PCPlus4W <= PCPlus4M;
-            multiplier_resultW <= multiplier_resultM;
+            multdiv_resultW <= multdiv_resultM;
         end
 
     end   

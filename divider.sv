@@ -1,6 +1,6 @@
 `timescale 1ns/1ps
 
-module divider_test (
+module divider (
     input logic clk,
     input logic reset,
     input logic [2:0] funct3,
@@ -8,8 +8,7 @@ module divider_test (
     input logic [31:0] a,
     input logic [31:0] b,
     
-    output logic div_by_zero_s,
-    output logic div_by_zero_u,
+    output logic stall,
     output logic [31:0] result
 );
 
@@ -94,7 +93,7 @@ module divider_test (
                 dividend_tvalid_s <= 1'b0;
                 divisor_tvalid_s <= 1'b0;
 
-            end // once the input data is given successfully, deassert tvalid signals for signed division
+            end
 
             // Handshake completion for unsigned
             if ( (dividend_tvalid_u && dividend_tready_u) &&
@@ -103,7 +102,7 @@ module divider_test (
                 dividend_tvalid_u <= 1'b0;
                 divisor_tvalid_u <= 1'b0;
 
-            end // once the input data is given successfully,  deassert tvalid signals for unsigned division
+            end
 
             // during division
             if (div_req_inflight) begin
@@ -120,6 +119,7 @@ module divider_test (
                     endcase
 
                     div_req_inflight <= 1'b0;
+
                     // unstall the pipeline stages
 
                 end
@@ -134,6 +134,8 @@ module divider_test (
 
                     div_req_inflight <= 1'b0;
 
+                    // unstall the pipeline stages
+
                 end
 
             end
@@ -142,10 +144,21 @@ module divider_test (
             
     end
 
+    // stall logic
+    always_comb begin
+
+        stall = 0;
+
+        if (ex_is_div && !div_req_inflight) stall = 1;
+        else if (div_req_inflight) stall = 1;
+        else if (dout_tvalid_s || dout_tvalid_u || reset) stall = 0;
+
+    end
+
     signed_divider signed_div (
         .aclk                   (clk),
         .aclken                 (ex_is_div),
-        .aresetn                (~reset), // active-low reset
+        .aresetn                (~reset),
 
         .s_axis_dividend_tvalid (dividend_tvalid_s),
         .s_axis_divisor_tvalid  (divisor_tvalid_s),
@@ -153,18 +166,17 @@ module divider_test (
         .s_axis_dividend_tdata  (dividend_tdata_s),
         .s_axis_divisor_tdata   (divisor_tdata_s),
 
-        .s_axis_dividend_tready (dividend_tready_s), // out
-        .s_axis_divisor_tready  (divisor_tready_s), // out
+        .s_axis_dividend_tready (dividend_tready_s),
+        .s_axis_divisor_tready  (divisor_tready_s),
 
-        .m_axis_dout_tvalid     (dout_tvalid_s), // out
-        .m_axis_dout_tuser      (div_by_zero_s), // divide-by-zero flag
+        .m_axis_dout_tvalid     (dout_tvalid_s),
         .m_axis_dout_tdata      (div_result_s) // {remainder, quotient}
     );
 
     unsigned_divider unsigned_div (
         .aclk                   (clk),
         .aclken                 (ex_is_div),
-        .aresetn                (~reset), // active-low reset
+        .aresetn                (~reset),
 
         .s_axis_dividend_tvalid (dividend_tvalid_u),
         .s_axis_divisor_tvalid  (divisor_tvalid_u),
@@ -172,11 +184,10 @@ module divider_test (
         .s_axis_dividend_tdata  (dividend_tdata_u),
         .s_axis_divisor_tdata   (divisor_tdata_u),
 
-        .s_axis_dividend_tready (dividend_tready_u), // out
-        .s_axis_divisor_tready  (divisor_tready_u), // out
+        .s_axis_dividend_tready (dividend_tready_u),
+        .s_axis_divisor_tready  (divisor_tready_u),
 
-        .m_axis_dout_tvalid     (dout_tvalid_u), // out
-        .m_axis_dout_tuser      (div_by_zero_u),    // divide-by-zero flag
+        .m_axis_dout_tvalid     (dout_tvalid_u),
         .m_axis_dout_tdata      (div_result_u) // {remainder, quotient}
     );
     

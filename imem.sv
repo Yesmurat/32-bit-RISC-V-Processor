@@ -1,6 +1,6 @@
 `timescale 1ns/1ps
 
-// memory depth = 64
+// Instruction Memory 64 words x 32
 
 module imem (
         input logic [31:0] a,
@@ -17,11 +17,10 @@ endmodule // Instruction memory
 
 /*
 
-00200093 = addi x1, x0, 2 -> x1 = 2
-ffd00113 = addi x2, x0, -3 -> x2 = -3
-022081b3 = mul x3, x1, x2 -> x3 = -6
-02209233 = mulh x4, x1, x2 -> x4 = -1
-0220a2b3 = mulhsu x5, x1, x2 -> x5 = 1
-0220b333 = mulhu x6, x1, x2 -> x6 = 1
+01400093 = addi x1, x0, 20 -> x1 = 20
+00500113 = addi x2, x0, 5 -> x2 = 5
+0220d1b3 = divu x3, x1, x2 -> x3 = 4
+ffc00213 = addi x4, x0, -4 -> x4 = -4
+0240c2b3 = div x5, x1, x4 -> x5 = -5
 
 */

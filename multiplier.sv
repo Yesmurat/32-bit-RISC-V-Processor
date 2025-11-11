@@ -9,7 +9,7 @@ module multiplier(
     input logic  [31:0]     a, b,
 
     output logic [31:0]     result,
-    output logic            stalled
+    output logic            stall
     
 );
 
@@ -31,33 +31,33 @@ module multiplier(
     always_comb begin
 
         next_state = state;
-        stalled = 0;
+        stall = 0;
 
         unique case (state)
 
             IDLE: if (ce) begin
                 next_state = S0;
-                stalled = 1;
+                stall = 1;
             end
 
             S0: begin
                 next_state = S1;
-                stalled = 1;
+                stall = 1;
             end
 
             S1: begin
                 next_state = S2;
-                stalled = 1;
+                stall = 1;
             end
 
             S2: begin
                 next_state = IDLE;
-                stalled = 0;
+                stall = 0;
             end
 
             default: begin
                 next_state = IDLE;
-                stalled = 0;
+                stall = 0;
             end
         endcase
 

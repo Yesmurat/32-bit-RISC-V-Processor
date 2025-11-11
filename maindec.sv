@@ -1,7 +1,7 @@
 `timescale 1ns/1ps
 
 module maindec (input logic [6:0] op,
-                input logic [6:0] funct7,
+                input logic funct7_b0,
 
                 // outputs
                 output logic [2:0] ResultSrcD,
@@ -16,15 +16,10 @@ module maindec (input logic [6:0] op,
                 output logic jumpRegD
     );
 
-    // logic [14:0] controls;
-
-    // assign {RegWriteD, ImmSrcD, ALUSrcD, MemWriteD,
-            // ResultSrcD, BranchD, ALUOp, JumpD, SrcAsrcD, jumpRegD} = controls;
-
     always_comb begin
         unique case (op)
 
-            // RegWrite_ImmSrc_ALUSrc_MemWrite_ResultSrc_Branch_ALUOp_Jump_SrcAsrcD_jumpRegD
+            // RegWriteD, ImmSrcD[2:0], ALUSrcD, MemWriteD, ResultSrcD[2:0], BranchD, ALUOpD[1:0], JumpD, SrcAsrcD, jumpRegD
 
             7'b0000011: begin
 
@@ -60,9 +55,9 @@ module maindec (input logic [6:0] op,
 
             7'b0110011: begin
 
-                if (funct7 == 7'b0000001) begin // multiplication
+                if (funct7_b0) begin // mult/div
 
-                    // controls = 15'b1_000_0_0_100_0_10_0_1_1; // multiplication
+                    // 1, 000, 0, 0, 100, 0, 10, 0, 0, 1 // mult/div
                     RegWriteD = 1'b1;
                     ImmSrcD = 3'b000;
                     ALUSrcD = 1'b0;
@@ -78,7 +73,7 @@ module maindec (input logic [6:0] op,
 
                 else begin
 
-                    // controls = 15'b1_000_0_0_000_0_10_0_1_1;
+                    // 1, 000, 0, 0, 000, 0, 10, 0, 0, 1
                     RegWriteD = 1'b1;
                     ImmSrcD = 3'b000;
                     ALUSrcD = 1'b0;
@@ -96,7 +91,7 @@ module maindec (input logic [6:0] op,
 
             7'b0010011: begin
                 
-                // controls = 15'b1_000_1_0_000_0_10_0_1_1; // I-type
+                // 1, 000, 1, 0, 000, 0, 10, 0, 1, 1
                 RegWriteD = 1'b1;
                 ImmSrcD = 3'b000;
                 ALUSrcD = 1'b1;
@@ -112,7 +107,7 @@ module maindec (input logic [6:0] op,
 
             7'b1100011: begin
 
-                // controls = 15'b0_010_0_0_000_1_01_0_1_1; // B-type
+                // 0, 010, 0, 0, 000, 1, 01, 0, 1, 1
                 RegWriteD = 1'b0;
                 ImmSrcD = 3'b010;
                 ALUSrcD = 1'b0;
@@ -128,7 +123,7 @@ module maindec (input logic [6:0] op,
 
             7'b0110111: begin
 
-                // controls = 15'b1_100_1_0_011_0_00_0_0_1; // lui
+                // 1, 100, 1, 0, 011, 0, 00, 0, 0, 1
                 RegWriteD = 1'b1;
                 ImmSrcD = 3'b100;
                 ALUSrcD = 1'b1;
@@ -144,7 +139,7 @@ module maindec (input logic [6:0] op,
 
             7'b0010111: begin
 
-                // controls = 15'b1_100_1_0_000_0_00_0_0_1; // auipc
+                // 1, 100, 1, 0, 000, 0, 00, 0, 0, 1
                 RegWriteD = 1'b1;
                 ImmSrcD = 3'b100;
                 ALUSrcD = 1'b1;
@@ -160,7 +155,7 @@ module maindec (input logic [6:0] op,
 
             7'b1101111: begin
 
-                // controls = 15'b1_011_0_0_010_0_00_1_1_1; // jal
+                // 1, 011, 0, 0, 010, 0, 00, 1, 1, 1
                 RegWriteD = 1'b1;
                 ImmSrcD = 3'b011;
                 ALUSrcD = 1'b0;
@@ -176,7 +171,7 @@ module maindec (input logic [6:0] op,
 
             7'b1100111: begin
 
-                // controls = 15'b1_000_0_0_010_0_00_1_1_0; // jalr
+                // 1, 000, 0, 0, 010, 0, 00, 1, 1, 0
                 RegWriteD = 1'b1;
                 ImmSrcD = 3'b000;
                 ALUSrcD = 1'b0;

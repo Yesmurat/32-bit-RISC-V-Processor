@@ -1,6 +1,5 @@
 `timescale 1ns/1ps
-// Instruction memory 64 words x 32 bits
-
+// Data memory 64 words x 32 bits
 
 module dmem (
 
