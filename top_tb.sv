@@ -19,7 +19,7 @@ module top_tb;
         reset = 1;
         #7;
         reset = 0;
-        #300;
+        #600;
         $stop;
     end
 

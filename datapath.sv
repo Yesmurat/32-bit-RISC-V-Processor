@@ -249,8 +249,8 @@ module datapath (
 
         if (ex_is_muldiv) begin
 
-            if (funct3E[2]) ex_div = 1; // div
-            else ex_mul = 1; // mult
+            ex_div = funct3E[2];
+            ex_mul = !funct3E[2];
 
         end
         

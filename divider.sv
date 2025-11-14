@@ -41,6 +41,19 @@ module divider (
     logic div_req_inflight;
     logic div_is_signed;
 
+    // stall logic
+    always_comb begin
+
+        stall = 0;
+
+        if (ex_is_div && !div_req_inflight) stall = 1;
+
+        else if (div_req_inflight) stall = 1;
+        
+        else if (dout_tvalid_s || dout_tvalid_u || reset) stall = 0;
+
+    end
+
     always_ff @( posedge clk or posedge reset ) begin
 
         if (reset) begin
@@ -104,55 +117,32 @@ module divider (
 
             end
 
-            // during division
             if (div_req_inflight) begin
+                
+                if (div_is_signed && dout_tvalid_u) begin
 
-                // latch the final result and unstall the pipeline stages
-
-                // Collect result
-                if (div_is_signed && dout_tvalid_s) begin
-                    
-                    unique case (funct3)
-                        3'b100: result <= div_result_s[31:0]; // div
-                        3'b110: result <= div_result_s[63:32]; // rem
-                        default: result <= 32'b0;
-                    endcase
-
-                    div_req_inflight <= 1'b0;
-
-                    // unstall the pipeline stages
+                    case (funct3)
+                        3'b100: result = div_result_s[31:0]; // div
+                        3'b110: result = div_result_s[63:32]; // rem
+                        default: result = 32'b0;
+                    endcase                    
 
                 end
 
-                else if (!div_is_signed && dout_tvalid_u) begin
-                    
-                    unique case (funct3)
-                        3'b101: result <= div_result_u[31:0]; // divu
-                        3'b111: result <= div_result_u[63:32]; // remu
-                        default: result <= 32'b0;
+                if ( (!div_is_signed) && dout_tvalid_u ) begin
+
+                    case (funct3)
+                        3'b101: result = div_result_u[31:0]; // divu
+                        3'b111: result = div_result_u[63:32]; // remu
+                        default: result = 32'b0;
                     endcase
-
-                    div_req_inflight <= 1'b0;
-
-                    // unstall the pipeline stages
-
+                    
                 end
 
             end
 
         end
             
-    end
-
-    // stall logic
-    always_comb begin
-
-        stall = 0;
-
-        if (ex_is_div && !div_req_inflight) stall = 1;
-        else if (div_req_inflight) stall = 1;
-        else if (dout_tvalid_s || dout_tvalid_u || reset) stall = 0;
-
     end
 
     signed_divider signed_div (
