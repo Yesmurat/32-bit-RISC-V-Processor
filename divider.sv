@@ -12,56 +12,56 @@ module divider (
     output logic [31:0] result
 );
 
-    // Signals for signed division
+    // signed/unsigned division signals
 
-    logic dividend_tvalid_s;
-    logic dividend_tready_s;
-    logic [31:0] dividend_tdata_s;
+    logic dividend_tvalid_s, dividend_tvalid_u;
+    logic dividend_tready_s, dividend_tready_u;
+    logic [31:0] dividend_tdata_s, dividend_tdata_u;
 
-    logic divisor_tvalid_s;
-    logic divisor_tready_s;
-    logic [31:0] divisor_tdata_s;
+    logic divisor_tvalid_s, divisor_tvalid_u;
+    logic divisor_tready_s, divisor_tready_u;
+    logic [31:0] divisor_tdata_s, divisor_tdata_u;
 
-    logic dout_tvalid_s;
-    logic [63:0] div_result_s;
-
-    // Signals for unsigned division
-
-    logic dividend_tvalid_u;
-    logic dividend_tready_u;
-    logic [31:0] dividend_tdata_u;
-
-    logic divisor_tvalid_u;
-    logic divisor_tready_u;
-    logic [31:0] divisor_tdata_u;
-
-    logic dout_tvalid_u;
-    logic [63:0] div_result_u;
+    logic dout_tvalid_s, dout_tvalid_u;
+    logic [63:0] div_result_s, div_result_u;
 
     logic div_req_inflight;
     logic div_is_signed;
 
     logic post_stall;
+
     // current problem is that stall logic doesn't work because ex_is_div is always high during division
     // When div_req_inflight goes to 0 after dout_tvalid_u is asserted, ex_is_div is still asserted
-    // resulting in (ex_is_div && !div_req_inflight) to be true (new division)
+    // resulting new division
+
+    // I need to create a signal (ex_is_div_int) which would behave exactly like ex_is_div and become 0 
+    // at the time when post_stall is 1 and div_req_inflight is 0.
+
+    logic ex_is_div_int;
+    assign ex_is_div_int = (!reset && !post_stall) ? ex_is_div : 1'b0;
 
     // stall logic
     always_comb begin
 
         // on reset
-        if (reset) stall = 0;
+        if (reset) begin
+            stall = 0;
+        end
 
-        else if (post_stall) stall = 0;
+        else if (post_stall) begin
+            // one cycle after result: no stall, but also no new division because ex_is_div_int = 0
+            stall = 0;
+        end
 
-        else if ( (ex_is_div && !div_req_inflight) // on new division
-                  || div_req_inflight ) // during division
-                stall = 1;
+        else if ( (ex_is_div_int && !div_req_inflight) || div_req_inflight ) begin
+            stall = 1;
+        end
 
-        else stall = 0;
+        else begin
+            stall = 0;
+        end
         
     end
-
 
     always_ff @(posedge clk or posedge reset) begin // request control
 
@@ -72,7 +72,7 @@ module divider (
 
         else begin
             
-            if (ex_is_div && !div_req_inflight) begin // on new division
+            if (ex_is_div_int && !div_req_inflight) begin // on new division
             
                 div_req_inflight <= 1'b1;
                 div_is_signed <= (funct3 == 3'b100 || funct3 == 3'b110);
@@ -100,7 +100,7 @@ module divider (
         end
 
         else begin
-            if (ex_is_div && !div_req_inflight) begin // on new division
+            if (ex_is_div_int && !div_req_inflight) begin // on new division
                 dividend_tvalid_s <= 1'b1;
                 divisor_tvalid_s <= 1'b1;
                 dividend_tdata_s <= a;
@@ -126,7 +126,7 @@ module divider (
         end
 
         else begin
-            if (ex_is_div && !div_req_inflight) begin
+            if (ex_is_div_int && !div_req_inflight) begin
                 dividend_tvalid_u <= 1'b1;
                 divisor_tvalid_u <= 1'b1;
                 dividend_tdata_u <= a;
