@@ -53,13 +53,26 @@ module divider (
         // on reset
         if (reset) stall = 0;
 
+        else if (post_stall) stall = 0;
+
         else if ( (ex_is_div && !div_req_inflight) // on new division
                   || div_req_inflight ) // during division
                 stall = 1;
 
-        else if (post_stall) stall = 0;
-
         else stall = 0;
+        
+    end
+
+    logic ex_is_div_int;
+
+    always_comb begin
+
+        ex_is_div_int = 0;
+
+        else if ( (div_is_signed && dout_tvalid_s)
+                || (!div_is_signed && dout_tvalid_u) ) ex_is_div_int = 0;
+
+        else ex_is_div_int = ex_is_div;
         
     end
 
@@ -78,7 +91,12 @@ module divider (
                 div_is_signed <= (funct3 == 3'b100 || funct3 == 3'b110);
             end
 
-            if ( (div_is_signed && dout_tvalid_s) || (!div_is_signed && dout_tvalid_u) ) div_req_inflight <= 1'b0;
+            if ( (div_is_signed && dout_tvalid_s) // when signed division result is available
+                || (!div_is_signed && dout_tvalid_u) ) begin // when unsigned division result is available
+
+                    div_req_inflight <= 1'b0;
+
+                end
 
         end
         
