@@ -42,10 +42,9 @@ module divider (
     logic div_is_signed;
 
     logic post_stall;
-    logic ex_is_div_reg;
     // current problem is that stall logic doesn't work because ex_is_div is always high during division
-    // When div_req_inflight goes to 0 after dout_tvalid_u is asserted, ex_is_div is asserted
-    // resulting in new division
+    // When div_req_inflight goes to 0 after dout_tvalid_u is asserted, ex_is_div is still asserted
+    // resulting in (ex_is_div && !div_req_inflight) to be true (new division)
 
     // stall logic
     always_comb begin
@@ -63,19 +62,6 @@ module divider (
         
     end
 
-    logic ex_is_div_int;
-
-    always_comb begin
-
-        ex_is_div_int = 0;
-
-        else if ( (div_is_signed && dout_tvalid_s)
-                || (!div_is_signed && dout_tvalid_u) ) ex_is_div_int = 0;
-
-        else ex_is_div_int = ex_is_div;
-        
-    end
-
 
     always_ff @(posedge clk or posedge reset) begin // request control
 
@@ -86,9 +72,11 @@ module divider (
 
         else begin
             
-            if (ex_is_div && !div_req_inflight) begin
+            if (ex_is_div && !div_req_inflight) begin // on new division
+            
                 div_req_inflight <= 1'b1;
                 div_is_signed <= (funct3 == 3'b100 || funct3 == 3'b110);
+
             end
 
             if ( (div_is_signed && dout_tvalid_s) // when signed division result is available
