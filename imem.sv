@@ -22,5 +22,5 @@ endmodule // Instruction memory
 0220d1b3 = divu x3, x1, x2 -> x3 = 4
 ffc00213 = addi x4, x0, -4 -> x4 = -4
 0240c2b3 = div x5, x1, x4 -> x5 = -5
-
+002081b3 = addi x3, x1, x2 -> x3 = x1 + x2
 */
