@@ -25,10 +25,10 @@ set_false_path -from [get_ports reset]
 #set_property -dict { PACKAGE_PIN E14   IOSTANDARD LVCMOS33 } [get_ports { led1_b }]; #IO_L15P_T2_DQS_15 Sch=led1_b
 
 ## LEDs
-# set_property -dict { PACKAGE_PIN E18   IOSTANDARD LVCMOS33 } [get_ports { pc_out[0] }]; #IO_L16N_T2_A27_15 Sch=led[2]
-# set_property -dict { PACKAGE_PIN F13   IOSTANDARD LVCMOS33 } [get_ports { pc_out[1] }]; #IO_L17P_T2_A26_15 Sch=led[3]
-# set_property -dict { PACKAGE_PIN E13   IOSTANDARD LVCMOS33 } [get_ports { pc_out[2] }]; #IO_L17N_T2_A25_15 Sch=led[4]
-# set_property -dict { PACKAGE_PIN H15   IOSTANDARD LVCMOS33 } [get_ports { pc_out[3] }]; #IO_L18P_T2_A24_15 Sch=led[5]
+set_property -dict { PACKAGE_PIN E18   IOSTANDARD LVCMOS33 } [get_ports { pc_out[0] }]; #IO_L16N_T2_A27_15 Sch=led[2]
+set_property -dict { PACKAGE_PIN F13   IOSTANDARD LVCMOS33 } [get_ports { pc_out[1] }]; #IO_L17P_T2_A26_15 Sch=led[3]
+set_property -dict { PACKAGE_PIN E13   IOSTANDARD LVCMOS33 } [get_ports { pc_out[2] }]; #IO_L17N_T2_A25_15 Sch=led[4]
+set_property -dict { PACKAGE_PIN H15   IOSTANDARD LVCMOS33 } [get_ports { pc_out[3] }]; #IO_L18P_T2_A24_15 Sch=led[5]
 
 ## Buttons
 #set_property -dict { PACKAGE_PIN G15   IOSTANDARD LVCMOS33 } [get_ports { btn[0] }]; #IO_L18N_T2_A23_15 Sch=btn[0]

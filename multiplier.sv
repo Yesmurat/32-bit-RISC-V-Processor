@@ -55,10 +55,6 @@ module multiplier(
                 stall = 0;
             end
 
-            default: begin
-                next_state = IDLE;
-                stall = 0;
-            end
         endcase
 
     end

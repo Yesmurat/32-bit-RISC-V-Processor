@@ -33,7 +33,8 @@ module datapath (
     // outputs to instruction and data memories
     output logic [31:0] PCF,
 
-    output logic [31:0] ALUResultM, WriteDataM,
+    output logic [31:0] ALUResultM,
+    output logic [31:0] WriteDataM,
     output logic [3:0]  byteEnable,
     output logic        MemWriteM,
 
@@ -43,19 +44,21 @@ module datapath (
     output logic [6:0]  funct7,
 
     // outputs to Hazard Unit
-    output logic [4:0] Rs1D, Rs2D,
-    output logic [4:0] Rs1E, Rs2E,
-    output logic [4:0] RdE,
-    output logic PCSrcE, ResultSrcE_zero, RegWriteM, RegWriteW,
-    output logic [4:0] RdM,
-    output logic [4:0] RdW,
-    output logic stalled
+    output logic [4:0]  Rs1D, Rs2D,
+    output logic [4:0]  Rs1E, Rs2E,
+    output logic [4:0]  RdE,
+    output logic        PCSrcE,
+    output logic        ResultSrcE_zero,
+    output logic        RegWriteM,
+    output logic        RegWriteW,
+    output logic [4:0]  RdM,
+    output logic [4:0]  RdW,
+    output logic        stalled
 
 );
 
     // PC mux
-    logic [31:0] PCPlus4F;
-    logic [31:0] PCTargetE, PCF_new;
+    logic [31:0] PCPlus4F, PCTargetE, PCF_new;
 
     mux2 pcmux(
         .d0(PCPlus4F),
@@ -128,7 +131,7 @@ module datapath (
 
     logic [31:0] SrcAE, SrcBE;
     logic [31:0] WriteDataE;
-    logic [31:0] ALUResultE;
+    (* keep = "true" *) logic [31:0] ALUResultE;
     logic SrcAsrcE, ALUSrcE;
 
     logic RegWriteE;
@@ -140,9 +143,11 @@ module datapath (
     logic jumpRegE;
 
     IDEXregister idexreg(
+
         .clk(clk),
         .en(~stalled),
         .reset(FlushE | reset),
+
         // ID stage control signals
         .RegWriteD(RegWriteD),
         .ResultSrcD(ResultSrcD),
@@ -168,8 +173,12 @@ module datapath (
         .jumpRegE(jumpRegE),
 
         // datapath inputs & outputs
-        .RD1(RD1), .RD2(RD2), .PCD(PCD),
-        .Rs1D(Rs1D), .Rs2D(Rs2D), .RdD(RdD),
+        .RD1(RD1),
+        .RD2(RD2),
+        .PCD(PCD),
+        .Rs1D(Rs1D),
+        .Rs2D(Rs2D),
+        .RdD(RdD),
         .ImmExtD(ImmExtD),
         .PCPlus4D(PCPlus4D),
 
@@ -186,6 +195,7 @@ module datapath (
     // SrcA muxes
     
     mux3 SrcAE_input1mux(
+
         .d0(RD1E),
         .d1(ResultW),
         .d2(ALUResultM),
@@ -194,6 +204,7 @@ module datapath (
     );
 
     mux2 SrcAEmux(
+
         .d0(SrcAE_input1),
         .d1(PCE),
         .s(SrcAsrcE),
@@ -203,6 +214,7 @@ module datapath (
     // SrcB muxes
     
     mux3 WriteDataEmux(
+
         .d0(RD2E),
         .d1(ResultW),
         .d2(ALUResultM),
@@ -211,6 +223,7 @@ module datapath (
     );
 
     mux2 SrcBEmux(
+
         .d0(WriteDataE),
         .d1(ImmExtE),
         .s(ALUSrcE),
@@ -218,6 +231,7 @@ module datapath (
     );
 
     branch_unit bu(
+
         .SrcAE(SrcAE), .SrcBE(SrcBE),
         .funct3E(funct3E),
         .branchTakenE(branchTakenE)
@@ -229,6 +243,7 @@ module datapath (
     assign PCTargetE = adder_base + ImmExtE;
 
     ALU alu(
+
         .d0(SrcAE),
         .d1(SrcBE),
         .s(ALUControlE),
@@ -238,23 +253,14 @@ module datapath (
     // Mult/Div Interface
 
     logic [31:0] multiplier_resultE, divider_resultE;
-    logic ex_is_muldiv, ex_mul, ex_div, mul_stall, div_stall;
+    logic        ex_is_muldiv;
+    logic        ex_mul, ex_div;
+    logic        mul_stall, div_stall;
 
     assign ex_is_muldiv = ResultSrcE[2];
-    
-    always_comb begin
 
-        ex_mul = 0;
-        ex_div = 0;
-
-        if (ex_is_muldiv) begin
-
-            ex_div = funct3E[2];
-            ex_mul = !funct3E[2];
-
-        end
-        
-    end
+    assign ex_div = ex_is_muldiv ? funct3E[2] : 0;
+    assign ex_mul = ex_is_muldiv ? !funct3E[2] : 0;
     
     assign stalled = mul_stall | div_stall;
 
@@ -271,39 +277,41 @@ module datapath (
 
        .stall(mul_stall),
        .result(multiplier_resultE)
-
    );
 
    divider divider (
 
-    .clk(clk),
-    .ex_is_div(ex_div),
-    .reset(reset),
-    .funct3(funct3E),
-    .a(SrcAE),
-    .b(SrcBE),
+        .clk(clk),
+        .ex_is_div(ex_div),
+        .reset(reset),
+        .funct3(funct3E),
+        .a(SrcAE),
+        .b(SrcBE),
     
-    .stall(div_stall),
-    .result(divider_resultE)
-
+        .stall(div_stall),
+        .result(divider_resultE)
    );
 
     // Memory write (MEM) stage
-    logic [31:0] PCPlus4M;
-    logic [2:0] funct3M;
-    logic [2:0] ResultSrcM;
-    logic [1:0] byteAddrM;
-    logic [31:0] load_data;
-    logic [31:0] ImmExtM;
-    logic [31:0] multiplier_resultM;
-    logic [31:0] divider_resultM;
+    logic [31:0]    PCPlus4M;
+    logic [2:0]     funct3M;
+    logic [2:0]     ResultSrcM;
+    logic [1:0]     byteAddrM;
+    logic [31:0]    load_data;
+    logic [31:0]    ImmExtM;
+    logic [31:0]    multiplier_resultM;
+    logic [31:0]    divider_resultM;
+    logic [31:0]    multdiv_resultM;
 
     assign byteAddrM = ALUResultM[1:0];
+    assign multdiv_resultM = funct3M[2] ? divider_resultM : multiplier_resultM;
 
     EXMEMregister exmemreg(
+
         .clk(clk),
         .en(~stalled),
         .reset(reset),
+
         // EX stage control signals
         .RegWriteE(RegWriteE),
         .ResultSrcE(ResultSrcE),
@@ -360,16 +368,12 @@ module datapath (
     end
 
     loadext loadext(
+
         .LoadTypeM(funct3M),
         .RD_data(RD_data),
         .byteAddrM(byteAddrM),
         .load_data(load_data)
     );
-
-    // choose between mult/div results
-    logic [31:0] multdiv_resultM;
-    assign multdiv_resultM = funct3M[2] ? divider_resultM : multiplier_resultM;
-    // look at RV32IM specification if confused
 
 
     // Register file writeback (WB) stage
@@ -387,6 +391,7 @@ module datapath (
     */
 
     MEMWBregister wbreg(
+
         .clk(clk),
         .en(~stalled),
         .reset(reset),
@@ -416,6 +421,7 @@ module datapath (
     );
 
     mux5 ResultWmux(
+
         .d0(ALUResultW),
         .d1(ReadDataW),
         .d2(PCPlus4W),

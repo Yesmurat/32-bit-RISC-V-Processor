@@ -9,6 +9,7 @@ module loadext (
 );
 
     always_comb begin
+
         unique case (LoadTypeM)
 
             3'b000: 
@@ -43,8 +44,9 @@ module loadext (
                                 : {16'b0, RD_data[31:16]};
 
             3'b010: load_data = RD_data; // lw
+
+            default: load_data = 3'b000;
             
-            default: load_data = 32'b0; // don't care
         endcase
     end
     

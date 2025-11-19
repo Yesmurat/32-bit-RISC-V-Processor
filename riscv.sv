@@ -33,7 +33,7 @@ module riscv (
 
     logic ResultSrcE_zero;
 
-    // Hazard unit wires
+    // Hazard unit signals
     logic StallD, StallF;
     logic FlushD, FlushE;
     logic [1:0] ForwardAE, ForwardBE;
@@ -51,8 +51,6 @@ module riscv (
     logic [6:0] funct7;
 
     logic jumpRegD;
-
-    // ----------------------------
 
     controller controller (
         .op(opcode),

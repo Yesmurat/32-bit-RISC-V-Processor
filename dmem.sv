@@ -16,7 +16,7 @@ module dmem (
 
     initial $readmemh("dmem.mem", RAM);
 
-    assign rd = RAM[a[31:2]];
+    // assign rd = RAM[a[31:2]];
 
     always_ff @(posedge clk) begin
         
@@ -26,6 +26,8 @@ module dmem (
             if (byteEnable[1]) RAM[a[31:2]][15:8] <= wd[15:8];
             if (byteEnable[2]) RAM[a[31:2]][23:16] <= wd[23:16];
             if (byteEnable[3]) RAM[a[31:2]][31:24] <= wd[31:24];
+
+            rd <= RAM[a[31:2]];
         end
 
     end
