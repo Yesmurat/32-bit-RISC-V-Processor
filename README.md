@@ -114,22 +114,27 @@ The project emphasizes:
 ## Directory Structure
 ```
 .
-├── rtl/
+├── main
 │   ├── core/
+│   │   ├── aludec.sv
+│   │   ├── blocks.sv
+│   │   ├── controller.sv
 │   │   ├── datapath.sv
-│   │   ├── control.sv
-│   │   ├── hazard_unit.sv
-│   │   ├── forwarding_unit.sv
-│   │   └── regfile.sv
+│   │   ├── extend.sv
+│   │   ├── hazard.sv
+│   │   └── loadext.sv
+│   │   ├── maindec.sv
+│   │   ├── multiplier.sv
+│   │   ├── registers.sv
+│   │   ├── riscv.sv
 │   ├── memory/
 │   │   ├── imem.sv
 │   │   └── dmem.sv
 │   └── top.sv
 ├── sim/
-│   ├── testbench.sv
-│   └── programs/
+│   ├── top_tb.sv
 ├── constraints/
-│   └── timing.xdc
+│   └── constraints.xdc
 └── README.md
 ```
 
