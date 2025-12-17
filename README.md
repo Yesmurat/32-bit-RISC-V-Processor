@@ -11,10 +11,6 @@ The project emphasizes:
 - hazard detection and forwarding
 - timing-aware design choices suitable for FPGA synthesis
 
-
-::contentReference[oaicite:0]{index=0}
-
-
 ---
 
 ## Features
@@ -116,6 +112,7 @@ The project emphasizes:
 ---
 
 ## Directory Structure
+```
 .
 ├── rtl/
 │   ├── core/
@@ -134,7 +131,7 @@ The project emphasizes:
 ├── constraints/
 │   └── timing.xdc
 └── README.md
-
+```
 
 ---
 
