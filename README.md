@@ -131,10 +131,13 @@ The project emphasizes:
 │   │   ├── imem.sv
 │   │   └── dmem.sv
 │   └── top.sv
+|
 ├── sim/
 │   ├── top_tb.sv
+|
 ├── constraints/
 │   └── constraints.xdc
+|
 └── README.md
 ```
 
