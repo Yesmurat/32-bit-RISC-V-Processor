@@ -200,7 +200,6 @@ The project emphasizes:
 ## References
 
 - *The RISC-V Instruction Set Manual, Volume I*
-- *Computer Organization and Design: RISC-V Edition*
 - *Digital Design and Computer Architecture*
 
 ---
